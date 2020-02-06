@@ -6,6 +6,8 @@ const ChangelogLib = require("./changelog");
 const Logger = require("../logger");
 const Moment = require("moment-timezone");
 const Env = require("../env");
+const fs = require('fs');
+const curl = new (require( 'curl-request' ))();
 
 exports.generate = async () => {
   const tags = await TagLib.getLatestAndSecondLatestTagByProjectId(Env.GITLAB_PROJECT_ID);
@@ -28,5 +30,33 @@ exports.generate = async () => {
   const changeLog = await ChangelogLib.getChangelogByStartAndEndDate(startDate, endDate);
   const changeLogContent = await ChangelogLib.generateChangeLogContent(changeLog, {useSlack: false});
   Logger.debug(`Changelog: ${changeLogContent}`);
-  return await TagLib.upsertTagDescriptionByProjectIdAndTag(Env.GITLAB_PROJECT_ID, latestTag, changeLogContent);
+
+  // Write the Changelog file at app root (remember, we are in a Dockerized app)
+  fs.writeFile("my-changelog.md", "Hey there!", function(err)
+  {
+    if(err) {
+      return console.log(err);
+    }
+    console.log("The file was saved!");
+  }); 
+
+  // Upload generated changelog to update the Gitlab project CI variable  'changelog_str'
+  // curl --request PUT --header "PRIVATE-TOKEN: NeC5krPegYzhSqB_kxiZ" "https://gitlab.com/api/v4/projects/16454318/variables/changelog_str" --form "value=Hi curl"
+  curl
+  .setHeaders([
+    'PRIVATE-TOKEN: ${Env.GITLAB_PERSONAL_TOKEN}'
+  ])
+  .setBody({
+   'value': 'Hello (node) curl'
+  })
+  .post('https://gitlab.com/api/v4/projects/${Env.GITLAB_PROJECT_ID}/variables/changelog_str') // TODO: make 'changelog_str' an environment var and pass it in
+  .then(({statusCode, body, headers}) => {
+      console.log(statusCode, body, headers)
+  })
+  .catch((e) => {
+      console.log(e);
+  });
+
+  //
+  //return await TagLib.upsertTagDescriptionByProjectIdAndTag(Env.GITLAB_PROJECT_ID, latestTag, changeLogContent);
 };
