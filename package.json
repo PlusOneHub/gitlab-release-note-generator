@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/jk1z/GitLab-Release-Note-Generator#readme",
   "dependencies": {
+    "curl-request": "1.1.1",
     "chalk": "2.4.2",
     "lodash": "4.17.15",
     "moment-timezone": "0.5.25",
