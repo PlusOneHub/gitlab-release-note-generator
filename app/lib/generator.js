@@ -7,7 +7,13 @@ const Logger = require("../logger");
 const Moment = require("moment-timezone");
 const Env = require("../env");
 const fs = require('fs');
-const curl = new (require( 'curl-request' ))();
+
+// added by Arun to upload result to project CI string variable
+const { Curl } = require('node-libcurl');
+const curl = new Curl();
+const close = curl.close.bind(curl);
+
+Logger.debug(`Sanity check: Arun's GITLAB_PERSONAL_TOKEN is ${Env.GITLAB_PERSONAL_TOKEN}`);
 
 exports.generate = async () => {
   const tags = await TagLib.getLatestAndSecondLatestTagByProjectId(Env.GITLAB_PROJECT_ID);
@@ -40,23 +46,23 @@ exports.generate = async () => {
     console.log("The file was saved!");
   }); 
 
-  // Upload generated changelog to update the Gitlab project CI variable  'changelog_str'
+  // added by Arun to upload generated changelog to update the Gitlab project CI variable 'changelog_str'
   // curl --request PUT --header "PRIVATE-TOKEN: NeC5krPegYzhSqB_kxiZ" "https://gitlab.com/api/v4/projects/16454318/variables/changelog_str" --form "value=Hi curl"
-  curl
-  .setHeaders([
-    'PRIVATE-TOKEN: ${Env.GITLAB_PERSONAL_TOKEN}'
-  ])
-  .setBody({
-   'value': 'Hello (node) curl'
-  })
-  .post('https://gitlab.com/api/v4/projects/${Env.GITLAB_PROJECT_ID}/variables/changelog_str') // TODO: make 'changelog_str' an environment var and pass it in
-  .then(({statusCode, body, headers}) => {
-      console.log(statusCode, body, headers)
-  })
-  .catch((e) => {
-      console.log(e);
-  });
+  //curl.setOpt(Curl.option.HTTPHEADER, `PRIVATE-TOKEN: ${Env.GITLAB_PERSONAL_TOKEN}`)
+  curl.setOpt(Curl.option.VERBOSE, true);
+  curl.setOpt(Curl.option.URL, `https://gitlab.com/api/v4/projects/${Env.GITLAB_PROJECT_ID}/variables/changelog_str`);
+  curl.setOpt(Curl.option.UPLOAD, true);
 
-  //
+  curl.setOpt(Curl.option.HEADER, `PRIVATE-TOKEN: NeC5krPegYzhSqB_kxiZ`);
+  //curl.setOpt(Curl.option.HTTPHEADER, [`PRIVATE-TOKEN: NeC5krPegYzhSqB_kxiZ`])
+
+  curl.setOpt(Curl.option.READDATA, `value=${changeLogContent}`);
+  curl.on('end', close);
+  curl.on('error', close);
+  curl.perform();
+  
+  Logger.debug(`done (PRIVATE-TOKEN: ${Env.GITLAB_PERSONAL_TOKEN})`);
+
+  // This would optionally allow us to update the tag descripting in Gitlab as well
   //return await TagLib.upsertTagDescriptionByProjectIdAndTag(Env.GITLAB_PROJECT_ID, latestTag, changeLogContent);
 };

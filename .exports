@@ -1,0 +1,6 @@
+export GITLAB_PERSONAL_TOKEN=NeC5krPegYzhSqB_kxiZ
+export GITLAB_PROJECT_ID=16454318
+export GITLAB_API_ENDPOINT=https://gitlab.com/api/v4/
+
+alias docker-build="docker build -t local-gitlab-release-note-generator ."
+alias docker-run="docker container run -e TZ=Asia/Tokyo -e GITLAB_API_ENDPOINT=$GITLAB_API_ENDPOINT -e GITLAB_PERSONAL_TOKEN=$GITLAB_PERSONAL_TOKEN -e GITLAB_PROJECT_ID=$GITLAB_PROJECT_ID -e TARGET_BRANCH=ci-integration local-gitlab-release-note-generator"
