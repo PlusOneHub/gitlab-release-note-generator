@@ -1,0 +1,1 @@
+docker build -t local-gitlab-release-note-generator .
