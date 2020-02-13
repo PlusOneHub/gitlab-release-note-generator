@@ -37,6 +37,11 @@ exports.generate = async () => {
   const changeLogContent = await ChangelogLib.generateChangeLogContent(changeLog, {useSlack: false})
   Logger.debug(`[DEBUG] New changelog = ${changeLogContent}`)
 
+  // strip markdown for DeployGate release notes
+  const removeMd = require('remove-markdown');
+  const plainLog = removeMd(changeLogContent);
+  Logger.debug(`[DEBUG] New planelog (md stripped) = ${plainLog}`)
+
   // Upload apk to DeployGate with release notes
   // cURL equivalent: curl -H  "Authorization: token %1" -F "file=@Build/app.apk" -F "message=%2" "https://deploygate.com/api/users/plusone-inc/apps"
   var request = require('request') // https://www.npmjs.com/package/request/v/2.88.0
@@ -50,7 +55,7 @@ exports.generate = async () => {
   });
 
   var formData = {
-    message: `${changeLogContent}`,
+    message: `${plainLog}`,
     file: fs.createReadStream('./Build/app.apk')
   };
 

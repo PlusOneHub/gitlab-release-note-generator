@@ -24,6 +24,7 @@
     "lodash": "4.17.15",
     "moment-timezone": "0.5.25",
     "parse-link-header": "1.0.1",
+    "remove-markdown": "^0.3.0",
     "request": "2.88.0",
     "request-promise-native": "1.0.7"
   },
